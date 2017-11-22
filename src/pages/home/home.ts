@@ -27,7 +27,7 @@ export class HomePage {
       quality: 50,
       destinationType: DestinationType.FILE_URL,
       sourceType: PictureSourceType.CAMERA,
-      encodingType: EncodingType.PNG,
+      encodingType: EncodingType.JPEG,
       targetHeight: 500,
       targetWidth: 500,
       saveToPhotoAlbum: false
@@ -54,12 +54,22 @@ export class HomePage {
     });
 
     let options: FileUploadOptions = {
-      mimeType: 'application/octet-stream',
+      mimeType: 'image/jpeg',
       headers: {
         'Ocp-Apim-Subscription-Key': '<enter-key-here>'
       }
     };
-    const visionApiUrl = 'https://eastus.api.cognitive.microsoft.com/vision/v1.0/describe';
+    /**
+     *  let options: FileUploadOptions = {
+      fileKey: 'ionicfile',
+      fileName: 'ionicfile',
+      chunkedMode: false,
+      mimeType: "image/jpeg",
+      headers: {}
+    }
+     * */
+
+    const visionApiUrl = 'http://192.168.12.194:8080/upload'; //'https://eastus.api.cognitive.microsoft.com/vision/v1.0/describe';
 
     let fileTransfer = this.fileTransfer.create();
 
@@ -82,5 +92,4 @@ export class HomePage {
     });
     alert.present();
   }
-
 }
