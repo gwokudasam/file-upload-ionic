@@ -77,7 +77,7 @@ export class HomePage {
     fileTransfer.upload(this.imgSrc, visionApiUrl, options).then(data => {
       let json = JSON.parse(data.response);
       loading.dismissAll();
-      this.showAlert(json.description.captions[0].text);
+      this.showAlert(JSON.stringify(json));
     }, err => {
       loading.dismissAll();
       alert(`**error: ${err.body}`);
@@ -86,7 +86,7 @@ export class HomePage {
 
   showAlert(message) {
     let alert = this.alertCtrl.create({
-      title: `I think it's...`,
+      title: `Status`,
       subTitle: message,
       buttons: ['OK']
     });
