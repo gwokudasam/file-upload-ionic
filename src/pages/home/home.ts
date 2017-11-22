@@ -1,95 +1,81 @@
 import { Component } from '@angular/core';
-import { AlertController, LoadingController, NavController } from 'ionic-angular';
-import { Camera, CameraOptions, DestinationType, EncodingType, PictureSourceType } from '@ionic-native/camera';
-import { File } from '@ionic-native/file';
-import { FileTransfer, FileUploadOptions } from '@ionic-native/file-transfer';
-
-declare var cordova: any;
+import { NavController, LoadingController, ToastController } from 'ionic-angular';
+import { FileTransfer, FileUploadOptions, FileTransferObject } from '@ionic-native/file-transfer';
+//Extra Libraries, Need to install
+import { FileChooser } from '@ionic-native/file-chooser';
+import { FilePath } from '@ionic-native/file-path';
 
 @Component({
   selector: 'page-home',
   templateUrl: 'home.html'
 })
 export class HomePage {
-  public imgSrc: string;
-  public base64Image: string;
 
-  constructor(
-    public alertCtrl: AlertController,
-    public navCtrl: NavController, 
-    private camera: Camera, 
-    private fileTransfer: FileTransfer, 
-    private file: File, 
-    public loadingCtrl: LoadingController) { }
+  uri:any;
+  fileName:any;
+  uploadStatus:any;
+  uploadMessage:any;
 
-  takePicture() {
-    let options: CameraOptions = {
-      quality: 50,
-      destinationType: DestinationType.FILE_URL,
-      sourceType: PictureSourceType.CAMERA,
-      encodingType: EncodingType.JPEG,
-      targetHeight: 500,
-      targetWidth: 500,
-      saveToPhotoAlbum: false
-    };
-    
-    this.camera.getPicture(options).then((imagePath) => {
-      var currentName = imagePath.substr(imagePath.lastIndexOf('/') + 1);
-      var currentPath = imagePath.substr(0, imagePath.lastIndexOf('/') + 1);
-      this.copyFileToLocalDir(currentPath, currentName);
-    });
+  constructor(public navCtrl: NavController,
+              private transfer: FileTransfer,
+              public loadingCtrl: LoadingController,
+              public toastCtrl: ToastController,private fileChooser: FileChooser,private filePath: FilePath) {}
+
+  uploadFile() {
+    //Choose the file using filechoose library
+    this.fileChooser.open()
+        .then(uri => {
+          this.uri=uri;
+          return uri;
+        })
+        //Get filename using filepath library
+        .then(uri=>this.filePath.resolveNativePath(uri))
+        .then(filePath => {
+          let filename:any = filePath.split('/');
+          filename = filename[filename.length - 1];
+          return(filename)
+        })
+        //Start Transfering using file transfer plugin
+        .then(filename=>{
+          this.fileName=filename;
+          let loader = this.loadingCtrl.create({
+            content: "Uploading..."
+          });
+          loader.present();
+          const fileTransfer: FileTransferObject = this.transfer.create();
+          let options: FileUploadOptions = {
+            fileKey: 'file',
+            fileName: filename,
+            chunkedMode: false,
+            headers: {}
+          }
+          fileTransfer.upload(this.uri, 'http://192.168.12.194:8080/upload', options)
+              .then((data) => {
+                this.uploadStatus=data.responseCode;
+                this.uploadMessage=JSON.stringify(data.response);
+                console.log(data+" Uploaded Successfully");
+                alert(JSON.stringify(data.response));
+                loader.dismiss();
+                this.presentToast("Image uploaded successfully");
+              }, (err) => {
+                console.log(err);
+                loader.dismiss();
+                this.presentToast(err);
+              });
+        })
+        .catch(err => alert(err));
   }
 
-  copyFileToLocalDir(currentPath, currentName) {
-    this.file.copyFile(currentPath, currentName, cordova.file.dataDirectory, currentName).then(success => {
-      this.imgSrc = cordova.file.dataDirectory + currentName;
-    }, error => {
-      alert('Error while storing file.');
-    });;
-  }
-
-  uploadImage() {
-    const loading = this.loadingCtrl.create({
-      content: 'Uploading...',
+  presentToast(msg) {
+    let toast = this.toastCtrl.create({
+      message: msg,
+      duration: 6000,
+      position: 'bottom'
     });
 
-    let options: FileUploadOptions = {
-      mimeType: 'image/jpeg',
-      headers: {
-        'Ocp-Apim-Subscription-Key': '<enter-key-here>'
-      }
-    };
-    /**
-     *  let options: FileUploadOptions = {
-      fileKey: 'ionicfile',
-      fileName: 'ionicfile',
-      chunkedMode: false,
-      mimeType: "image/jpeg",
-      headers: {}
-    }
-     * */
-
-    const visionApiUrl = 'http://192.168.12.194:8080/upload'; //'https://eastus.api.cognitive.microsoft.com/vision/v1.0/describe';
-
-    let fileTransfer = this.fileTransfer.create();
-
-    loading.present();
-    fileTransfer.upload(this.imgSrc, visionApiUrl, options).then(data => {
-      let json = JSON.parse(data.response);
-      loading.dismissAll();
-      this.showAlert(JSON.stringify(json));
-    }, err => {
-      loading.dismissAll();
-      alert(`**error: ${err.body}`);
+    toast.onDidDismiss(() => {
+      console.log('Dismissed toast');
     });
-  }
-
-  showAlert(message) {
-    let alert = this.alertCtrl.create({
-      title: `Status`,
-      subTitle: message,
-      buttons: ['OK']
-    });
-    alert.present();
+    toast.present();
   }
 }

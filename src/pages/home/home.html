@@ -1,23 +1,26 @@
 <ion-header>
-  <ion-navbar color="primary">
+  <ion-navbar>
     <ion-title>
-      Angular Vision
+      Ionic Select and Upload to directory
     </ion-title>
   </ion-navbar>
 </ion-header>
 
 <ion-content padding>
-  
-  <button ion-button full color="primary" (click)="takePicture()">Take Picture</button>
-  
-  <ion-card *ngIf="imgSrc">
-    <img [src]="imgSrc" style="width:100%">
-  </ion-card>
+  <ion-item>
+    <button ion-button icon-left (click)="uploadFile()">
+      <ion-icon name="cloud-upload"></ion-icon>Upload
+    </button>
+  </ion-item>
 
+  <ion-item>
+    Filename: {{fileName}}
+  </ion-item>
+  <ion-item>
+    Status: {{uploadStatus}}
+  </ion-item>
+  <ion-item>
+    Response:
+    <div class="item">{{uploadMessage}}</div>
+  </ion-item>
 </ion-content>
-
-<ion-footer>
-  <ion-toolbar *ngIf="imgSrc">
-    <button ion-button full color="secondary" (click)="uploadImage()">Upload</button>
-  </ion-toolbar>
-</ion-footer>
