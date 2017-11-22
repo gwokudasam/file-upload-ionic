@@ -50,7 +50,7 @@ export class HomePage {
 
   uploadImage() {
     const loading = this.loadingCtrl.create({
-      content: 'Analyzing...',
+      content: 'Uploading...',
     });
 
     let options: FileUploadOptions = {
